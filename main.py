@@ -68,7 +68,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Hi! I'm your bot.\nAvailable commands:"
                                                                               f"\n{available_commands}")
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Sorry, you are not allowed to use this bot.")
@@ -111,7 +111,7 @@ Just remember these commands, and I'll take care of the rest.
     if str(chat_id) in user_id.values():
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Sorry, you are not allowed to use this bot.")
@@ -130,23 +130,19 @@ async def light(update: Update, context: CallbackContext):
             light_name = text[1]
             state = text[2]
 
-            # Handle light specific actions based on state
             if state == "on":
-                # Perform action to turn on the light named 'light_name'
-                esp.send_command("on")
-                await context.bot.send_message(chat_id=chat_id, text=f"{light_name.title()} light turned on!")
+                reply = esp.send_command("on")
+                await context.bot.send_message(chat_id=chat_id, text=f"{light_name.title()} {reply}")
             elif state == "off":
-                # Perform action to turn off the light named 'light_name'
-                await context.bot.send_message(chat_id=chat_id, text=f"{light_name.title()} light turned off!")
-
-                esp.send_command("off")
+                reply = esp.send_command("off")
+                await context.bot.send_message(chat_id=chat_id, text=f"{light_name.title()} {reply}")
             else:
                 await context.bot.send_message(chat_id=chat_id, text="Invalid light state. Use 'on' or 'off'.")
         else:
             await context.bot.send_message(chat_id=chat_id,
                                            text="Invalid command format. Use '/light <light_name> on/off'.")
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Sorry, you are not allowed to use this bot.")
@@ -155,7 +151,7 @@ async def light(update: Update, context: CallbackContext):
 async def list_all_users(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     if update.message.from_user.last_name:
-        username = update.message.from_user.first_name + " " + update.message.from_user.last_name
+        username = str(update.message.from_user.first_name + " " + update.message.from_user.last_name)
     else:
         username = update.message.from_user.first_name
     if str(chat_id) in user_id.values():
@@ -168,7 +164,7 @@ async def list_all_users(update: Update, context: CallbackContext):
                                            text="Sorry, this function is only allowed to owner")
 
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Sorry, you are not allowed to use this bot")
@@ -189,7 +185,7 @@ async def list_not_users(update: Update, context: CallbackContext):
         else:
             await update.message.reply_text("Sorry, this function is only allowed for owner")
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await update.message.reply_text("Sorry, you are not allowed to use this bot")
 
@@ -203,18 +199,21 @@ async def add_user(update: Update, context: CallbackContext):
     if str(chat_id) in user_id.values():
         if chat_id == owner:
             users_list = "\n".join([f"{name} ({chat_id})" for chat_id, name in not_allowed_id.items()])
+            if len(users_list) == 0:
+                await context.bot.send_message(chat_id=update.effective_chat.id,
+                                               text="There is no UnAuthorized users")
+            else:
+                await context.bot.send_message(chat_id=update.effective_chat.id,
+                                               text=f"UnAuthorized users:\n{users_list}")
+
             await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=f"Allowed users:\n{users_list}")
+                                           text="Type like this : /adduser <name> <value>")
             args = context.args
             username = args[0]
             if len(args) < 2:
                 if username == "dlt_all":
-                    with open('unauthorized.json', 'r+') as file:
-                        data = json.load(file)
-                        file.seek(0)  # Move file pointer to the beginning
-                        file.truncate()  # Truncate the file content
-                        file.write('{}')
-                        await update.message.reply_text("All elements in the unauthorized has been deleted")
+                    write_data_to_not_allowed({})
+                    await update.message.reply_text("All elements in the unauthorized has been deleted")
                 else:
                     await update.message.reply_text("Type like this : /adduser <name> <value>")
                     return
@@ -227,7 +226,7 @@ async def add_user(update: Update, context: CallbackContext):
         else:
             await update.message.reply_text("Sorry, this function only allowed to owner")
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await update.message.reply_text("Sorry, you are not allowed to use this bot")
 
@@ -257,7 +256,7 @@ async def remove_user(update: Update, context: CallbackContext):
         else:
             await update.message.reply_text("Sorry, this function is only allowed to owner")
     else:
-        not_allowed_id[username] = chat_id
+        not_allowed_id[username] = str(chat_id)
         write_data_to_not_allowed(not_allowed_id)
         await update.message.reply_text("Sorry, you are not allowed to use this bot")
 
