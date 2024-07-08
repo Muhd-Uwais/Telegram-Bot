@@ -278,7 +278,7 @@ async def message_handler(update: Update, context: CallbackContext) -> None:
 
 
 if __name__ == '__main__':
-    TOKEN = "7051340726:AAEWo6CIxwhghqHbVgdOQwo4cg7S1rpjlK8"
+    TOKEN = ""
     application = ApplicationBuilder().token(TOKEN).build()
 
     application.add_handler(CommandHandler('start', start))
